@@ -12,6 +12,7 @@
 #define WRONG_BEHAVIOUR 1
 #define OPEN_ERROR -1
 #define SEEK_ERROR -1
+#define DIR_CREATE_ERROR -1
 
 void reverse_string(unsigned char* str);
 void reverse_directory_name(const unsigned char* src, unsigned char* dest);
@@ -103,7 +104,8 @@ int reverse_file(const unsigned char* src, const unsigned char* dest) {
     }
 
     struct stat st;
-    if (fstat(src_file, &st) == OPEN_ERROR) {
+    int fstat_status = fstat(src_file, &st);
+    if (fstat_status == OPEN_ERROR) {
         perror("Error getting source file permissions");
         close(src_file);
         return EXIT_FAILURE;
@@ -148,7 +150,8 @@ int recursive_directory_reverse(const unsigned char* src, const unsigned char* d
         snprintf(dest_path, PATH_MAX, "%s/%s", dest, entry->d_name);
 
         struct stat st;
-        if (stat(src_path, &st) == -1) {
+        int stat_status = stat(src_path, &st);
+        if (stat_status == OPEN_ERROR) {
             perror("Error reading file or directory\n");
             return_value = EXIT_FAILURE;
             break;
@@ -183,12 +186,13 @@ int reverse_directory(const unsigned char* src, const unsigned char* dest) {
         return EXIT_FAILURE;
     }
     struct stat dir_info;
-    if (stat(src, &dir_info) == OPEN_ERROR) {
+    int stat_status = stat(src, &dir_info);
+    if (stat_status == OPEN_ERROR) {
         perror("Error reading directory\n");
         return EXIT_FAILURE;
     }
     int mkdir_result = mkdir(dest, dir_info.st_mode);
-    if (mkdir_result == -1) {
+    if (mkdir_result == DIR_CREATE_ERROR) {
         perror("Error creating destination directory\n");
         closedir(dir);
         return EXIT_FAILURE;
