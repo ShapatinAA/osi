@@ -11,6 +11,7 @@
 #define BUFFER_SIZE 4096
 #define WRONG_BEHAVIOUR 1
 #define OPEN_ERROR -1
+#define SEEK_ERROR -1
 
 void reverse_string(unsigned char* str);
 void reverse_directory_name(const unsigned char* src, unsigned char* dest);
@@ -69,13 +70,16 @@ int copy_reverse_content(off_t pos, int src_file, int dest_file, unsigned char* 
         off_t read_start = pos - BUFFER_SIZE > 0 ? pos - BUFFER_SIZE : 0;
         size_t bytes_to_read = pos - read_start;
         size_t bytes_to_write = bytes_to_read;
-        lseek(src_file, read_start, SEEK_SET);
+        size_t lseek_return = lseek(src_file, read_start, SEEK_SET);
+        if (lseek_return == SEEK_ERROR) {
+            perror("Error seeking in file\n");
+            return_value = EXIT_FAILURE;
+        }
 
         ssize_t bytes_read = read(src_file, buffer, bytes_to_read);
         if (bytes_read != bytes_to_read) {
             perror("Error reading source file\n");
             return_value = EXIT_FAILURE;
-            break;
         }
 
         reverse_buffer(buffer, bytes_read);
@@ -83,7 +87,6 @@ int copy_reverse_content(off_t pos, int src_file, int dest_file, unsigned char* 
         if (bytes_wrote != bytes_to_write) {
             perror("Error writing destination file\n");
             return_value = EXIT_FAILURE;
-            break;
         }
 
         pos = read_start;
@@ -116,6 +119,13 @@ int reverse_file(const unsigned char* src, const unsigned char* dest) {
     unsigned char buffer[BUFFER_SIZE];
 
     off_t pos = lseek(src_file, 0, SEEK_END);
+    if (pos == SEEK_ERROR) {
+        perror("Error seeking in file\n");
+        close(src_file);
+        close(dest_file);
+        return EXIT_FAILURE;
+    }
+
 
     return_value = copy_reverse_content(pos, src_file, dest_file, buffer);
 
