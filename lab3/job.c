@@ -14,22 +14,22 @@
 #define SEEK_ERROR -1
 #define DIR_CREATE_ERROR -1
 
-void reverse_string(unsigned char* str);
-void reverse_directory_name(const unsigned char* src, unsigned char* dest);
-void reverse_buffer(unsigned char* buffer, size_t bytes_read);
-int copy_reverse_content(off_t pos, int src_file, int dest_file, unsigned char* buffer);
-int reverse_file(const unsigned char* src, const unsigned char* dest);
-int recursive_directory_reverse(const unsigned char* src, const unsigned char* dest, DIR* dir);
-int reverse_directory(const unsigned char* src, const unsigned char* dest);
+void reverse_string(char* str);
+void reverse_directory_name(const char* src, char* dest);
+void reverse_buffer(char* buffer, size_t bytes_read);
+int copy_reverse_content(off_t pos, int src_file, int dest_file, char* buffer);
+int reverse_file(const char* src, const char* dest);
+int recursive_directory_reverse(const char* src, const char* dest, DIR* dir);
+int reverse_directory(const char* src, const char* dest);
 
-int main(int argc, unsigned char* argv[]) {
+int main(int argc, char* argv[]) {
     if (argc != 2) {
         printf("Usage: <source directory>\n");
         return EXIT_FAILURE;
     }
 
     char* src = argv[1];
-    unsigned char dest[PATH_MAX];
+    char dest[PATH_MAX];
     strcpy(dest, src);
     reverse_string(dest);
 
@@ -38,12 +38,12 @@ int main(int argc, unsigned char* argv[]) {
     return return_value;
 }
 
-void reverse_string(unsigned char* str) {
-    unsigned char* last_part = strrchr(str, '/');
+void reverse_string(char* str) {
+    char* last_part = strrchr(str, '/');
     if (last_part != NULL) {
         last_part++;
         size_t len = strlen(last_part);
-        unsigned char temp;
+        char temp;
         for (size_t i = 0; i < len / 2; i++) {
             temp = last_part[i];
             last_part[i] = last_part[len - i - 1];
@@ -52,20 +52,20 @@ void reverse_string(unsigned char* str) {
     }
 }
 
-void reverse_directory_name(const unsigned char* src, unsigned char* dest) {
+void reverse_directory_name(const char* src, char* dest) {
     strcpy(dest, src);
     reverse_string(dest);
 }
 
-void reverse_buffer(unsigned char* buffer, size_t bytes_read) {
+void reverse_buffer char* buffer, size_t bytes_read) {
     for (unsigned int i = 0; i < bytes_read / 2; i++) {
-        unsigned char tmp = buffer[i];
+        char tmp = buffer[i];
         buffer[i] = buffer[bytes_read - 1 - i];
         buffer[bytes_read - 1 - i] = tmp;
     }
 }
 
-int copy_reverse_content(off_t pos, int src_file, int dest_file, unsigned char* buffer) {
+int copy_reverse_content(off_t pos, int src_file, int dest_file, char* buffer) {
     int return_value = EXIT_SUCCESS;
     while (pos > 0) {
         off_t read_start = pos - BUFFER_SIZE > 0 ? pos - BUFFER_SIZE : 0;
@@ -95,7 +95,7 @@ int copy_reverse_content(off_t pos, int src_file, int dest_file, unsigned char* 
     return return_value;
 }
 
-int reverse_file(const unsigned char* src, const unsigned char* dest) {
+int reverse_file(const char* src, const char* dest) {
     int return_value = EXIT_SUCCESS;
     int src_file = open(src, O_RDONLY);
     if (src_file == OPEN_ERROR) {
@@ -118,7 +118,7 @@ int reverse_file(const unsigned char* src, const unsigned char* dest) {
         return EXIT_FAILURE;
     }
 
-    unsigned char buffer[BUFFER_SIZE];
+    char buffer[BUFFER_SIZE];
 
     off_t pos = lseek(src_file, 0, SEEK_END);
     if (pos == SEEK_ERROR) {
@@ -136,7 +136,7 @@ int reverse_file(const unsigned char* src, const unsigned char* dest) {
     return return_value;
 }
 
-int recursive_directory_reverse(const unsigned char* src, const unsigned char* dest, DIR* dir) {
+int recursive_directory_reverse(const char* src, const char* dest, DIR* dir) {
     int return_value = EXIT_SUCCESS;
     struct dirent* entry;
     while ((entry = readdir(dir)) != NULL) {
@@ -144,8 +144,8 @@ int recursive_directory_reverse(const unsigned char* src, const unsigned char* d
             continue;
         }
 
-        unsigned char src_path[PATH_MAX];
-        unsigned char dest_path[PATH_MAX];
+        char src_path[PATH_MAX];
+        char dest_path[PATH_MAX];
         snprintf(src_path, PATH_MAX, "%s/%s", src, entry->d_name);
         snprintf(dest_path, PATH_MAX, "%s/%s", dest, entry->d_name);
 
@@ -158,7 +158,7 @@ int recursive_directory_reverse(const unsigned char* src, const unsigned char* d
         }
 
         if (S_ISDIR(st.st_mode)) {
-            unsigned char reversed_dir[PATH_MAX];
+            char reversed_dir[PATH_MAX];
             reverse_directory_name(dest_path, reversed_dir);
             int reverse_result = reverse_directory(src_path, reversed_dir);
             if (reverse_result == WRONG_BEHAVIOUR) {
@@ -178,7 +178,7 @@ int recursive_directory_reverse(const unsigned char* src, const unsigned char* d
     return return_value;
 }
 
-int reverse_directory(const unsigned char* src, const unsigned char* dest) {
+int reverse_directory(const char* src, const char* dest) {
     int return_value = EXIT_SUCCESS;
     DIR* dir = opendir(src);
     if (dir == NULL) {
