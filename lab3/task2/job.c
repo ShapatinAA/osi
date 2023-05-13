@@ -8,7 +8,7 @@
 #include <sys/types.h>
 
 #define WRONG_BEHAVIOUR EXIT_FAILURE
-#define BUFFER_SIZE 15
+#define BUFFER_SIZE 4096
 #define SEEK_ERROR -1
 #define DELETE_ERROR -1
 #define CREATE_ERROR -1
@@ -23,6 +23,36 @@
 #define RIGHT_BEHAVIOUR EXIT_SUCCESS
 #define STR_DOES_MATCH RIGHT_BEHAVIOUR
 #define STRTOL_ERROR 0
+
+int parse_file(char* function, char* path, char* arguments, char* str) {
+    char *tmp, *tmp2, tmp3[PATH_MAX];
+    tmp2 = strtok(str, "/");
+    memcpy(tmp3, tmp2, strlen(tmp2));
+    while (tmp2 != NULL) {
+        memcpy(tmp3, tmp2, strlen(tmp2));
+        tmp2 = strtok(NULL, "/");
+    }
+    tmp = strtok(tmp3, " ");
+    if (tmp == NULL) {
+        fprintf(stderr, "Error in file parsing: no function name\n");
+        return EXIT_FAILURE;
+    }
+    memcpy(function, tmp, PATH_MAX);
+    tmp = strtok(NULL, " ");
+    if (tmp == NULL) {
+        fprintf(stderr, "Error in file parsing: no path name\n");
+        return EXIT_FAILURE;
+    }
+    memcpy(path, tmp, PATH_MAX);
+    tmp = strtok(NULL, " ");
+    if (tmp != NULL) {
+        memcpy(arguments, tmp, PATH_MAX);
+    }
+    else {
+        str = NULL;
+    }
+    return EXIT_SUCCESS;
+}
 
 int create_directory(const char* path) {
     mode_t file_mode = 0755;
@@ -260,14 +290,14 @@ int change_file_permissions(const char* path, mode_t mode) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 3) {
-        fprintf(stderr, "Usage: %s <function> <path> [additional arguments]\n", argv[0]);
+
+    char function[128];
+    char path[PATH_MAX];
+    char arguments[PATH_MAX];
+    int parse_status = parse_file(function, path, arguments, argv[0]);
+    if (parse_status == WRONG_BEHAVIOUR) {
         return EXIT_FAILURE;
     }
-
-    const char* function = argv[1];
-    const char* path = argv[2];
-
     if (strcmp(function, "create_directory") == STR_DOES_MATCH) {
         int return_value = EXIT_SUCCESS;
         return_value = create_directory(path);
@@ -299,12 +329,8 @@ int main(int argc, char* argv[]) {
         return return_value;
     }
     if (strcmp(function, "create_symlink") == STR_DOES_MATCH) {
-        if (argc < 4) {
-            fprintf(stderr, "Usage: %s create_symlink <target> <link_path>\n", argv[0]);
-            return EXIT_FAILURE;
-        }
         int return_value = EXIT_SUCCESS;
-        return_value = create_symlink(path, argv[3]);
+        return_value = create_symlink(path, arguments);
         return return_value;
     }
     if (strcmp(function, "print_symlink") == STR_DOES_MATCH) {
@@ -323,12 +349,8 @@ int main(int argc, char* argv[]) {
         return return_value;
     }
     if (strcmp(function, "create_hardlink") == STR_DOES_MATCH) {
-        if (argc < 4) {
-            fprintf(stderr, "Usage: %s create_hardlink <target> <link_path>\n", argv[0]);
-            return EXIT_FAILURE;
-        }
         int return_value = EXIT_SUCCESS;
-        return_value = create_hardlink(path, argv[3]);
+        return_value = create_hardlink(path, arguments);
         return return_value;
     }
     if (strcmp(function, "delete_hardlink") == STR_DOES_MATCH) {
@@ -342,11 +364,7 @@ int main(int argc, char* argv[]) {
         return return_value;
     }
     if (strcmp(function, "change_file_permissions") == STR_DOES_MATCH) {
-        if (argc < 4) {
-            fprintf(stderr, "Usage: %s change_file_permissions <path> <mode>\n", argv[0]);
-            return EXIT_FAILURE;
-        }
-        mode_t mode = (mode_t)strtol(argv[3], NULL, 8);
+        mode_t mode = (mode_t)strtol(arguments, NULL, 8);
         if (mode == STRTOL_ERROR) {
             perror("strtol");
             return EXIT_FAILURE;
